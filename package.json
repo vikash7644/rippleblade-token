@@ -1,0 +1,21 @@
+{
+  "name": "rippleblade-token",
+  "version": "1.0.0",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:mumbai": "hardhat run scripts/deploy.js --network mumbai",
+    "deploy:polygon": "hardhat run scripts/deploy.js --network polygon"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.6",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "chai": "^4.3.7",
+    "ethers": "^6.9.0",
+    "hardhat": "^2.18.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.3",
+    "dotenv": "^16.4.5"
+  }
+}
