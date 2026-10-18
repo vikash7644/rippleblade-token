@@ -4,25 +4,20 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying with:", deployer.address);
 
-  const TOKEN_NAME = "RIPPLEBLADE";
-  const TOKEN_SYMBOL = "RBLD";
-  const TOTAL_SUPPLY = hre.ethers.parseUnits("10000000", 18);
-
   const QUICKSWAP_ROUTER = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
   const USDT_ADDRESS = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
-  const TREASURY = deployer.address; // IMPORTANT: replace with multisig later
+
+  // Read TREASURY from env if provided (recommended to set to a multisig in GitHub Secrets or .env)
+  const TREASURY = process.env.TREASURY || deployer.address;
+
+  console.log("Using treasury:", TREASURY);
 
   const Token = await hre.ethers.getContractFactory("MyToken");
-  const token = await Token.deploy(
-    QUICKSWAP_ROUTER,
-    USDT_ADDRESS,
-    TREASURY
-  );
-
+  const token = await Token.deploy(QUICKSWAP_ROUTER, USDT_ADDRESS, TREASURY);
   await token.deployed();
   console.log("Token deployed:", token.address);
 
-  // Example: 100 tokens per 1 USDT
+  // Example: 100 tokens per 1 USDT (18-decimal token units)
   const tokensPerUSDT = hre.ethers.parseUnits("100", 18);
 
   const Presale = await hre.ethers.getContractFactory("Presale");
@@ -35,17 +30,20 @@ async function main() {
   await tx.wait();
   console.log("Presale marked fee-exempt");
 
-  console.log("\nNext steps:");
-  console.log("1) Send presale allocation to presale.address");
-  console.log("2) Send airdrop reserve to presale.address");
-  console.log("3) Buyers approve USDT for presale.buy()");
-  console.log("4) After presale, run presale.finalize()");
-  console.log("5) Add MYT/USDT liquidity on QuickSwap");
-  console.log("6) After LP, run presale.setLPCreated()");
-  console.log("7) Buyers call presale.claimPurchased() and presale.claimBonus()");
+  console.log("\nPOST-DEPLOY STEPS (manual):");
+  console.log("1) Transfer presale allocation tokens from deployer -> presale contract");
+  console.log("   e.g., token.transfer(presale.address, presaleAllocation)");
+  console.log("2) Transfer airdrop reserve tokens (for 10% bonuses) to presale contract");
+  console.log("3) Start presale (buyers call presale.buy(usdtAmount) after approving USDT)");
+  console.log("4) After presale, call presale.finalize()");
+  console.log("5) Buyers claim purchased tokens: presale.claimPurchased()");
+  console.log("6) Create LP on QuickSwap using deployer/multisig (fee-exempt account), pair RBLD/USDT.");
+  console.log("7) After LP created, owner calls presale.setLPCreated()");
+  console.log("8) Buyers claim bonus: presale.claimBonus()");
+  console.log("9) Consider locking LP tokens and moving treasury to multisig.");
 }
 
-main().catch((error) => {
-  console.error(error);
+main().catch((err) => {
+  console.error(err);
   process.exitCode = 1;
 });
